@@ -1,0 +1,961 @@
+{
+	"info": {
+		"_postman_id": "a5c7e8f9-b6d4-4e3f-8c2a-1d0f9e7b6c5a",
+		"name": "Document Management System",
+		"description": "API collection for the Document Management System with doctor, patient, and admin roles",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Register Patient",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"John Doe\",\n    \"email\": \"patient@example.com\",\n    \"password\": \"password123\",\n    \"phone\": \"1234567890\",\n    \"address\": {\n        \"street\": \"123 Main St\",\n        \"city\": \"New York\",\n        \"state\": \"NY\",\n        \"zipCode\": \"10001\",\n        \"country\": \"USA\"\n    },\n    \"location\": {\n        \"coordinates\": [74.3587, 31.5204]\n    },\n    \"dateOfBirth\": \"1990-01-01\",\n    \"gender\": \"male\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/register/patient",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"register",
+								"patient"
+							]
+						},
+						"description": "Register a new patient"
+					},
+					"response": []
+				},
+				{
+					"name": "Register Doctor",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Dr. Jane Smith\",\n    \"email\": \"doctor@example.com\",\n    \"password\": \"password123\",\n    \"specialization\": \"Cardiology\",\n    \"qualification\": \"MD, MBBS\",\n    \"experience\": 10,\n    \"phone\": \"9876543210\",\n    \"address\": {\n        \"clinic\": \"Health Care Clinic\",\n        \"street\": \"456 Medical Ave\",\n        \"city\": \"New York\",\n        \"state\": \"NY\",\n        \"zipCode\": \"10002\",\n        \"country\": \"USA\"\n    },\n    \"location\": {\n        \"coordinates\": [74.3587, 31.5204]\n    },\n    \"availableDays\": [\"Monday\", \"Wednesday\", \"Friday\"],\n    \"availableHours\": {\n        \"start\": \"09:00\",\n        \"end\": \"17:00\"\n    }\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/register/doctor",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"register",
+								"doctor"
+							]
+						},
+						"description": "Register a new doctor"
+					},
+					"response": []
+				},
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.token) {",
+									"    pm.environment.set('token', jsonData.token);",
+									"    pm.environment.set('userId', jsonData.user.id);",
+									"    pm.environment.set('userRole', jsonData.user.role);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"patient@example.com\",\n    \"password\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"login"
+							]
+						},
+						"description": "Login for all users"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Current User",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/me",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"me"
+							]
+						},
+						"description": "Get current user profile"
+					},
+					"response": []
+				}
+			],
+			"description": "Authentication endpoints for patient, doctor, and admin"
+		},
+		{
+			"name": "Patient",
+			"item": [
+				{
+					"name": "Get Patient Profile",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/patient/profile",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"patient",
+								"profile"
+							]
+						},
+						"description": "Get patient profile"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Patient Profile",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"John Doe Updated\",\n    \"phone\": \"1234567890\",\n    \"address\": {\n        \"street\": \"123 Main St Updated\",\n        \"city\": \"New York\",\n        \"state\": \"NY\",\n        \"zipCode\": \"10001\",\n        \"country\": \"USA\"\n    },\n    \"dateOfBirth\": \"1990-01-01\",\n    \"gender\": \"male\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/patient/profile",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"patient",
+								"profile"
+							]
+						},
+						"description": "Update patient profile"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Patient Location",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"coordinates\": [74.3587, 31.5204]\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/patient/location",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"patient",
+								"location"
+							]
+						},
+						"description": "Update patient location"
+					},
+					"response": []
+				},
+				{
+					"name": "Find Nearby Doctors",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/patient/nearby-doctors?distance=30000",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"patient",
+								"nearby-doctors"
+							],
+							"query": [
+								{
+									"key": "distance",
+									"value": "30000",
+									"description": "Distance in meters (30km)"
+								}
+							]
+						},
+						"description": "Find nearby doctors based on patient location"
+					},
+					"response": []
+				}
+			],
+			"description": "Patient-specific endpoints"
+		},
+		{
+			"name": "Doctor",
+			"item": [
+				{
+					"name": "Get Doctor Profile",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/doctor/profile",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"doctor",
+								"profile"
+							]
+						},
+						"description": "Get doctor profile"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Doctor Profile",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Dr. Jane Smith Updated\",\n    \"phone\": \"9876543210\",\n    \"specialization\": \"Cardiology\",\n    \"qualification\": \"MD, MBBS, PhD\",\n    \"experience\": 12,\n    \"address\": {\n        \"clinic\": \"Health Care Clinic Updated\",\n        \"street\": \"456 Medical Ave\",\n        \"city\": \"New York\",\n        \"state\": \"NY\",\n        \"zipCode\": \"10002\",\n        \"country\": \"USA\"\n    },\n    \"availableDays\": [\"Monday\", \"Tuesday\", \"Wednesday\", \"Friday\"],\n    \"availableHours\": {\n        \"start\": \"08:00\",\n        \"end\": \"18:00\"\n    }\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/doctor/profile",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"doctor",
+								"profile"
+							]
+						},
+						"description": "Update doctor profile"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Doctor Location",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"coordinates\": [74.3587, 31.5204]\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/doctor/location",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"doctor",
+								"location"
+							]
+						},
+						"description": "Update doctor location"
+					},
+					"response": []
+				},
+				{
+					"name": "Review Report",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"comment\": \"This report shows normal results. No immediate action required.\",\n    \"status\": \"reviewed\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/doctor/review-report/{{reportId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"doctor",
+								"review-report",
+								"{{reportId}}"
+							]
+						},
+						"description": "Review a patient report"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Reports to Review",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/doctor/reports-to-review",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"doctor",
+								"reports-to-review"
+							]
+						},
+						"description": "Get reports that need review"
+					},
+					"response": []
+				}
+			],
+			"description": "Doctor-specific endpoints"
+		},
+		{
+			"name": "Report",
+			"item": [
+				{
+					"name": "Upload Report",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.data && jsonData.data._id) {",
+									"    pm.environment.set('reportId', jsonData.data._id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "title",
+									"value": "Blood Test Report",
+									"type": "text"
+								},
+								{
+									"key": "description",
+									"value": "Regular blood test report for annual checkup",
+									"type": "text"
+								},
+								{
+									"key": "severity",
+									"value": "low",
+									"type": "text"
+								},
+								{
+									"key": "reportFile",
+									"type": "file",
+									"src": "/path/to/your/file.pdf"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/report/upload",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"report",
+								"upload"
+							]
+						},
+						"description": "Upload a new report"
+					},
+					"response": []
+				},
+				{
+					"name": "Get My Reports",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/report",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"report"
+							]
+						},
+						"description": "Get all reports for a patient"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Single Report",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/report/{{reportId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"report",
+								"{{reportId}}"
+							]
+						},
+						"description": "Get a single report"
+					},
+					"response": []
+				},
+				{
+					"name": "Find Nearby Doctors Based on Report",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/report/{{reportId}}/doctors",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"report",
+								"{{reportId}}",
+								"doctors"
+							]
+						},
+						"description": "Find nearby doctors based on report disease"
+					},
+					"response": []
+				}
+			],
+			"description": "Report management endpoints"
+		},
+		{
+			"name": "Chat",
+			"item": [
+				{
+					"name": "Send Chat Request",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/chat/request/{{doctorId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"chat",
+								"request",
+								"{{doctorId}}"
+							]
+						},
+						"description": "Send chat request to doctor"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Doctor Chat Requests",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/chat/requests",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"chat",
+								"requests"
+							]
+						},
+						"description": "Get all chat requests for a doctor"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Patient Chat Requests",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/chat/myrequests",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"chat",
+								"myrequests"
+							]
+						},
+						"description": "Get all chat requests for a patient"
+					},
+					"response": []
+				},
+				{
+					"name": "Approve Chat Request",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.data && jsonData.data._id) {",
+									"    pm.environment.set('chatId', jsonData.data._id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/chat/approve/{{patientId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"chat",
+								"approve",
+								"{{patientId}}"
+							]
+						},
+						"description": "Approve chat request"
+					},
+					"response": []
+				},
+				{
+					"name": "Reject Chat Request",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/chat/reject/{{patientId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"chat",
+								"reject",
+								"{{patientId}}"
+							]
+						},
+						"description": "Reject chat request"
+					},
+					"response": []
+				},
+				{
+					"name": "Get My Chats",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/chat",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"chat"
+							]
+						},
+						"description": "Get all active chats for a user"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Chat Messages",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/chat/{{chatId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"chat",
+								"{{chatId}}"
+							]
+						},
+						"description": "Get chat messages"
+					},
+					"response": []
+				}
+			],
+			"description": "Chat functionality endpoints"
+		},
+		{
+			"name": "Admin",
+			"item": [
+				{
+					"name": "Setup Admin",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Admin User\",\n    \"email\": \"admin@example.com\",\n    \"password\": \"adminpassword123\",\n    \"phone\": \"5555555555\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/admin/setup",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"admin",
+								"setup"
+							]
+						},
+						"description": "Create admin account (one-time setup)"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Admin Stats",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/admin/stats",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"admin",
+								"stats"
+							]
+						},
+						"description": "Get admin dashboard stats"
+					},
+					"response": []
+				},
+				{
+					"name": "Verify Doctor",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/admin/verify-doctor/{{doctorId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"admin",
+								"verify-doctor",
+								"{{doctorId}}"
+							]
+						},
+						"description": "Verify a doctor"
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Doctors",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/admin/doctors",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"admin",
+								"doctors"
+							]
+						},
+						"description": "Get all doctors"
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Patients",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/admin/patients",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"admin",
+								"patients"
+							]
+						},
+						"description": "Get all patients"
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Reports",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/admin/reports",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"admin",
+								"reports"
+							]
+						},
+						"description": "Get all reports"
+					},
+					"response": []
+				}
+			],
+			"description": "Admin-specific endpoints"
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:5000",
+			"type": "string"
+		}
+	]
+}
