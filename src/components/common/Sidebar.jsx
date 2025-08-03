@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FaBars, FaTimes } from 'react-icons/fa';
+import { FaBars, FaTimes, FaSignOutAlt } from 'react-icons/fa';
 
 /**
  * Reusable Sidebar component that can be configured for different user roles
@@ -10,6 +10,8 @@ import { FaBars, FaTimes } from 'react-icons/fa';
  * @param {string} props.title - Title displayed at the top of sidebar
  * @param {string} props.primaryColor - Primary color for active items and header (hex or tailwind class name)
  * @param {boolean} props.responsive - Whether sidebar should be responsive (collapsible on mobile)
+ * @param {Object} props.user - User object containing user information
+ * @param {Function} props.onLogout - Function to handle logout
  */
 function Sidebar({ 
   activeTab, 
@@ -17,7 +19,9 @@ function Sidebar({
   menuItems, 
   title, 
   primaryColor = 'red-600', 
-  responsive = true 
+  responsive = true,
+  user,
+  onLogout
 }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -64,34 +68,53 @@ function Sidebar({
         >
           <h2 className="text-xl font-bold">{title}</h2>
         </div>
-        <nav className="mt-6">
-          {menuItems.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => {
-                setActiveTab(item.id);
-                if (responsive) setIsMobileMenuOpen(false);
-              }}
-              className={`w-full flex items-center px-6 py-3 text-gray-700 ${hoverBgColorClass} ${hoverTextColorClass} transition-colors ${
-                activeTab === item.id ? 
-                  `${isHexColor ? '' : `bg-${primaryColor.replace('600', '50')}`} ${textColorClass} border-r-4 ${borderColorClass}` : 
-                  ''
-              }`}
-              style={
-                activeTab === item.id ? 
-                  (isHexColor ? { 
-                    ...hexStyles.hoverBg, 
-                    ...hexStyles.textColor,
-                    borderRightWidth: '4px',
-                    ...hexStyles.borderColor
-                  } : {}) : 
-                  {}
-              }
-            >
-              <item.icon className="w-5 h-5 mr-3" />
-              <span>{item.label}</span>
-            </button>
-          ))}
+        <nav className="mt-6 flex flex-col h-full">
+          <div className="flex-grow">
+            {menuItems.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => {
+                  setActiveTab(item.id);
+                  if (responsive) setIsMobileMenuOpen(false);
+                }}
+                className={`w-full flex items-center px-6 py-3 text-gray-700 ${hoverBgColorClass} ${hoverTextColorClass} transition-colors ${
+                  activeTab === item.id ? 
+                    `${isHexColor ? '' : `bg-${primaryColor.replace('600', '50')}`} ${textColorClass} border-r-4 ${borderColorClass}` : 
+                    ''
+                }`}
+                style={
+                  activeTab === item.id ? 
+                    (isHexColor ? { 
+                      ...hexStyles.hoverBg, 
+                      ...hexStyles.textColor,
+                      borderRightWidth: '4px',
+                      ...hexStyles.borderColor
+                    } : {}) : 
+                    {}
+                }
+              >
+                <item.icon className="w-5 h-5 mr-3" />
+                <span>{item.label}</span>
+              </button>
+            ))}
+          </div>
+          
+          {/* User info and logout button */}
+          {user && onLogout && (
+            <div className="mt-auto border-t border-gray-200 pt-4 pb-2 px-4">
+              <div className="mb-2 text-sm text-gray-600">
+                <span className="block font-medium">{user.name || user.email}</span>
+                <span className="block text-xs opacity-75">{user.role}</span>
+              </div>
+              <button
+                onClick={onLogout}
+                className={`w-full flex items-center px-4 py-2 text-gray-700 rounded-md ${hoverBgColorClass} ${hoverTextColorClass} transition-colors`}
+              >
+                <FaSignOutAlt className="w-5 h-5 mr-3" />
+                <span>Logout</span>
+              </button>
+            </div>
+          )}
         </nav>
       </div>
 

@@ -134,11 +134,21 @@ function DoctorDashboard() {
     socketService.onNewMessage((data) => {
       if (selectedChat && data.chatId === selectedChat._id) {
         setChatMessages((prevMessages) => {
-          return {
-            ...prevMessages,
-            messages: [...(prevMessages.messages || []), data.message],
-          };
+          // Check if the message already exists to prevent duplicates
+          const messageExists = prevMessages.messages?.some(
+            (msg) => msg._id === data.message._id
+          );
+          
+          // Only add the message if it doesn't already exist
+          if (!messageExists) {
+            return {
+              ...prevMessages,
+              messages: [...(prevMessages.messages || []), data.message],
+            };
+          }
+          return prevMessages; // Return unchanged if message already exists
         });
+        
         // Mark message as read since we're viewing this chat
         socketService.markAsRead(data.chatId);
       }

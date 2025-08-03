@@ -26,6 +26,9 @@ function AdminDashboard() {
 
   // Reference to track initial mount for tab data effect
   const isInitialMount = useRef(true);
+  
+  // Reference to store polling interval
+  const pollingIntervalRef = useRef(null);
 
   // Admin data states
   const [stats, setStats] = useState(null);
@@ -44,13 +47,33 @@ function AdminDashboard() {
     { id: "setup", label: "Admin Setup", icon: FaCog },
   ];
 
+  // Function to start real-time data polling
+  const startPolling = () => {
+    // Clear any existing interval
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current);
+    }
+    
+    // Set up polling interval (every 10 seconds)
+    pollingIntervalRef.current = setInterval(() => {
+      console.log("AdminDashboard: Auto-refreshing data");
+      fetchTabData().catch(error => {
+        console.error("Error during auto-refresh:", error);
+      });
+    }, 10000); // 10 seconds interval
+    
+    console.log("AdminDashboard: Started real-time data polling");
+  };
+  
   // Check if admin is set up and fetch initial data
   useEffect(() => {
     console.log("AdminDashboard: Initial useEffect running");
+    let isMounted = true; // Flag to prevent state updates after unmount
+    
     const checkAdminSetup = async () => {
       try {
         console.log("AdminDashboard: Setting loading to true");
-        setLoading(true);
+        if (isMounted) setLoading(true);
 
         // Check if user is logged in and is admin
         // First check local storage
@@ -67,7 +90,7 @@ function AdminDashboard() {
             console.log("AdminDashboard: User data from API:", userData);
           } catch (err) {
             console.error("Failed to fetch user data:", err);
-            navigate("/signin");
+            if (isMounted) navigate("/signin");
             return;
           }
         }
@@ -82,7 +105,7 @@ function AdminDashboard() {
 
         if (!userObject) {
           console.log("AdminDashboard: No user data, redirecting to signin");
-          navigate("/signin");
+          if (isMounted) navigate("/signin");
           return;
         }
 
@@ -90,92 +113,135 @@ function AdminDashboard() {
           console.log(
             "AdminDashboard: Not an admin user, redirecting to signin"
           );
-          navigate("/signin");
+          if (isMounted) navigate("/signin");
           return;
         }
 
         console.log("AdminDashboard: Admin user confirmed, proceeding");
 
         console.log("AdminDashboard: User data set", userObject);
-        setUser(userObject);
+        if (isMounted) setUser(userObject);
 
         // Try to fetch admin stats to check if admin is set up
         console.log("AdminDashboard: Fetching stats");
         try {
           const statsData = await adminService.getStats();
           console.log("AdminDashboard: Stats received", statsData);
-          setStats(statsData);
-          setIsAdminSetup(true);
+          if (isMounted) {
+            setStats(statsData);
+            setIsAdminSetup(true);
+            // Ensure we have data before setting loading to false
+            setLoading(false);
+            
+            // Start real-time data polling after initial data load
+            startPolling();
+          }
         } catch (error) {
           // If we get a 404, admin needs to be set up
           if (error.status === 404) {
-            setIsAdminSetup(false);
-            setActiveTab("setup");
+            if (isMounted) {
+              setIsAdminSetup(false);
+              console.log("AdminDashboard: Admin needs setup");
+              setActiveTab("setup");
+              setLoading(false); // Make sure to set loading to false
+            }
           } else {
-            throw error;
+            console.error("Error fetching admin stats:", error);
+            if (isMounted) {
+              setError("Failed to load admin data. Please try again.");
+              setLoading(false);
+            }
           }
         }
-
-        setLoading(false);
       } catch (error) {
-        console.error("Error checking admin setup:", error);
-        setError("Failed to check admin setup. Please try again.");
-        setLoading(false);
+        console.error("Unexpected error in checkAdminSetup:", error);
+        if (isMounted) {
+          setError("An unexpected error occurred. Please try again.");
+          setLoading(false);
+        }
       }
     };
 
     checkAdminSetup();
+    return () => {
+      isMounted = false;
+    };
   }, [navigate]);
 
-  // Fetch data based on active tab
+  // Fetch data for the active tab
+  const fetchTabData = async () => {
+    try {
+      console.log(`AdminDashboard: Fetching data for ${activeTab} tab`);
+      switch (activeTab) {
+        case "home":
+          const statsData = await adminService.getStats();
+          setStats(statsData);
+          break;
+        case "doctors":
+          const doctorsData = await adminService.getAllDoctors();
+          setDoctors(doctorsData?.data || []);
+          break;
+        case "patients":
+          const patientsData = await adminService.getAllPatients();
+          setPatients(patientsData?.data || []);
+          break;
+        case "reports":
+          const reportsData = await adminService.getAllReports();
+          setReports(reportsData?.data || []);
+          break;
+        default:
+          break;
+      }
+      return true; // Indicate successful data fetch
+    } catch (error) {
+      console.error(`Error fetching ${activeTab} data:`, error);
+      setError(`Failed to load ${activeTab} data. Please try again.`);
+      throw error; // Re-throw to handle in the calling function
+    }
+  };
+
+  // Effect to fetch data when tab changes
   useEffect(() => {
-    // Skip initial render when component mounts
-    // This prevents double loading with the checkAdminSetup effect
+    // Skip on initial mount as we're already fetching data
     if (isInitialMount.current) {
       isInitialMount.current = false;
       return;
     }
 
-    const fetchTabData = async () => {
-      if (!isAdminSetup) return;
+    let isMounted = true;
 
-      try {
-        setLoading(true);
+    // Don't fetch data for setup tab
+    if (activeTab === "setup") return;
 
-        switch (activeTab) {
-          case "home":
-            const statsData = await adminService.getStats();
-            setStats(statsData?.data);
-            break;
-
-          case "doctors":
-            const doctorsData = await adminService.getAllDoctors();
-            setDoctors(doctorsData?.data);
-            break;
-
-          case "patients":
-            const patientsData = await adminService.getAllPatients();
-            setPatients(patientsData?.data);
-            break;
-
-          case "reports":
-            const reportsData = await adminService.getAllReports();
-            setReports(reportsData?.data);
-            break;
-
-          default:
-            break;
+    // Only fetch data if admin is set up
+    if (isAdminSetup) {
+      const fetchData = async () => {
+        try {
+          console.log("AdminDashboard: Fetching tab data");
+          await fetchTabData();
+          console.log("AdminDashboard: Tab data fetched");
+          if (isMounted) setLoading(false);
+        } catch (error) {
+          console.error("Error in fetchData:", error);
+          if (isMounted) {
+            setError("Failed to load admin data. Please try again.");
+            setLoading(false);
+          }
         }
+      };
 
-        setLoading(false);
-      } catch (error) {
-        console.error(`Error fetching ${activeTab} data:`, error);
-        setError(`Failed to load ${activeTab} data. Please try again.`);
-        setLoading(false);
+      fetchData();
+    }
+
+    return () => {
+      isMounted = false;
+      
+      // Clear polling interval on unmount
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+        pollingIntervalRef.current = null;
       }
     };
-
-    fetchTabData();
   }, [activeTab, isAdminSetup]);
 
   // Handle admin setup submission
@@ -210,8 +276,25 @@ function AdminDashboard() {
 
   // Handle logout
   const handleLogout = () => {
+    // Stop polling
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current);
+      pollingIntervalRef.current = null;
+    }
+    
+    // Clear all auth data
     localStorage.removeItem("accessToken");
     localStorage.removeItem("user");
+    localStorage.removeItem("refreshToken");
+    
+    // Clear state
+    setUser(null);
+    setStats(null);
+    setDoctors([]);
+    setPatients([]);
+    setReports([]);
+    
+    // Redirect to signin
     navigate("/signin");
   };
 

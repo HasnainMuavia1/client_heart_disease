@@ -178,6 +178,19 @@ const ReportModal = ({
                               
                               const result = await ecgPredictionService.predictEcg(reportFile);
                               setPredictionResult(result);
+                              
+                              // Automatically add prediction to description field
+                              if (result && result.prediction) {
+                                const predictionText = `ECG Analysis: ${result.prediction} (Confidence: ${result.confidence}%)`;
+                                
+                                // If description is empty, just set it to the prediction
+                                // Otherwise, add the prediction at the beginning of the existing description
+                                if (!reportDescription || reportDescription.trim() === "") {
+                                  setReportDescription(predictionText);
+                                } else {
+                                  setReportDescription(`${predictionText}\n\n${reportDescription}`);
+                                }
+                              }
                             } catch (error) {
                               console.error("Prediction error:", error);
                               setPredictionError(error.message || "Failed to get prediction");

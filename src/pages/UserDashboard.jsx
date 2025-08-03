@@ -366,14 +366,29 @@ const UserDashboard = () => {
 
   // Fetch all reports for the current user
   const fetchReports = async () => {
-    setReportsLoading(true);
-    setReportsError("");
-
     try {
+      setReportsLoading(true);
+      setReportsError("");
       const data = await reportService.getMyReports();
-      setReports(data?.data || []);
-    } catch (err) {
-      console.error("Error fetching reports:", err);
+      console.log("Fetched reports:", data);
+      
+      // Process the reports to ensure prediction data is properly structured
+      const processedReports = (data?.data || []).map(report => {
+        // If report has metadata with ECG prediction, make it accessible at the top level
+        if (report.metadata && report.metadata.isEcgReport) {
+          return {
+            ...report,
+            isEcgReport: true,
+            ecgPrediction: report.metadata.ecgPrediction,
+            ecgConfidence: report.metadata.ecgConfidence
+          };
+        }
+        return report;
+      });
+      
+      setReports(processedReports);
+    } catch (error) {
+      console.error("Error fetching reports:", error);
       setReportsError("Failed to load reports. Please try again.");
     } finally {
       setReportsLoading(false);
