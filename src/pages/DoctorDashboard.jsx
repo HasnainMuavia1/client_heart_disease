@@ -665,16 +665,21 @@ function DoctorDashboard() {
       const reportsData = await doctorService.getReportsToReview();
       console.log(reportsData);
       // Check if reportsData has the expected structure
+      let reportsArray = [];
       if (
         reportsData &&
         reportsData.success &&
         Array.isArray(reportsData.data)
       ) {
-        setReports(reportsData.data);
+        reportsArray = reportsData.data;
       } else {
         // If reportsData is already an array, use it directly
-        setReports(Array.isArray(reportsData) ? reportsData : []);
+        reportsArray = Array.isArray(reportsData) ? reportsData : [];
       }
+      
+      // Keep all reports, regardless of status
+      setReports(reportsArray);
+      
       setReportsLoading(false);
     } catch (err) {
       console.error("Error fetching reports:", err);
@@ -695,31 +700,60 @@ function DoctorDashboard() {
     }
   };
 
-  // Handle chat request approval
-  const handleApproveRequest = async (patientId) => {
+  // Handle approving a report
+  const handleApproveReport = async (reportId) => {
     try {
-      // Use the correct API endpoint with patientId
-      await chatService.approveChatRequest(patientId);
-      // Refresh chat requests after approval
-      fetchDashboardData();
-      alert("Chat request approved successfully!");
+      await doctorService.reviewReport(reportId, { status: 'reviewed', comment: 'Approved by doctor' });
+      // Refresh reports after approval
+      fetchReportsData();
+      alert("Report approved successfully");
     } catch (err) {
-      console.error("Error approving chat request:", err);
-      alert("Failed to approve chat request. Please try again.");
+      console.error("Error approving report:", err);
+      alert("Failed to approve report. Please try again.");
     }
   };
 
-  // Handle chat request rejection
-  const handleRejectRequest = async (patientId) => {
+  // Handle rejecting a report (marking as critical)
+  const handleRejectReport = async (reportId) => {
+    if (!reportId) {
+      alert("Invalid report ID");
+      return;
+    }
+
     try {
-      // Use the correct API endpoint with patientId
-      await chatService.rejectChatRequest(patientId);
-      // Refresh chat requests after rejection
-      fetchDashboardData();
-      alert("Chat request rejected.");
+      // First, find the report in the current list
+      const reportToUpdate = reports.find(report => report._id === reportId);
+      if (!reportToUpdate) {
+        alert("Report not found");
+        return;
+      }
+
+      console.log('Attempting to mark report as critical with ID:', reportId);
+      
+      // Use the simplest possible payload
+      await doctorService.reviewReport(reportId, {
+        status: 'critical'
+      });
+      
+      // Manually update the report in the local state
+      const updatedReports = reports.map(report => {
+        if (report._id === reportId) {
+          return {
+            ...report,
+            status: 'critical'
+          };
+        }
+        return report;
+      });
+      
+      setReports(updatedReports);
+      alert("Report marked as critical successfully");
+      
+      // Refresh the data in the background
+      fetchReportsData();
     } catch (err) {
-      console.error("Error rejecting chat request:", err);
-      alert("Failed to reject chat request. Please try again.");
+      console.error("Error marking report as critical:", err);
+      alert("Failed to mark report as critical. Please try again.");
     }
   };
 
@@ -1096,6 +1130,8 @@ function DoctorDashboard() {
                     <ReportsTable
                       reports={reports}
                       onReviewSubmit={handleReviewSubmit}
+                      onApprove={handleApproveReport}
+                      onReject={handleRejectReport}
                     />
                   )}
                 </div>
@@ -1131,6 +1167,8 @@ function DoctorDashboard() {
                 <ReportsTable
                   reports={reports}
                   onReviewSubmit={handleReviewSubmit}
+                  onApprove={handleApproveReport}
+                  onReject={handleRejectReport}
                 />
               )}
             </div>

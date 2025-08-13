@@ -8,9 +8,9 @@ import {
 } from "react-icons/fa";
 import { Modal, Button } from "react-bootstrap";
 
-function ReportsTable({ reports }) {
+function ReportsTable({ reports, onApprove, onReject }) {
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("pending");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [selectedReport, setSelectedReport] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
 
@@ -25,12 +25,12 @@ function ReportsTable({ reports }) {
   };
 
   const filteredReports = reports.filter((report) => {
-    // const matchesSearch =
-    //   report?.patient !== null &&
-    //   report?.patient?.name?.toLowerCase().includes(searchTerm.toLowerCase());
-    // const matchesStatus =
-    //   statusFilter === "pending" || report?.status === statusFilter;
-    return report;
+    const matchesSearch = searchTerm === "" || 
+      (report?.patient?.name && report?.patient?.name.toLowerCase().includes(searchTerm.toLowerCase()));
+    
+    const matchesStatus = statusFilter === "all" || report?.status === statusFilter;
+    
+    return matchesSearch && matchesStatus;
   });
   useEffect(() => {
     console.log(filteredReports);
@@ -50,57 +50,139 @@ function ReportsTable({ reports }) {
         <Modal.Body>
           {selectedReport && (
             <div className="p-4">
-              <div className="mb-4">
-                <h3 className="text-lg font-semibold">Patient Information</h3>
-                <p>
-                  <strong>Name:</strong> {selectedReport?.patient?.name}
-                </p>
-                <p>
-                  <strong>Email:</strong> {selectedReport?.patient?.email}
-                </p>
-                <p>
-                  <strong>ID:</strong>{" "}
-                  {selectedReport?.patient_id || selectedReport?.patientId}
-                </p>
-              </div>
-
-              <div className="mb-4">
-                <h3 className="text-lg font-semibold">Report Information</h3>
-                <p>
-                  <strong>Date:</strong>{" "}
-                  {selectedReport?.created_at
-                    ? new Date(selectedReport.created_at).toLocaleString()
-                    : "N/A"}
-                </p>
-                <p>
-                  <strong>Status:</strong>{" "}
-                  <span
-                    className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                      selectedReport.status === "pending"
-                        ? "bg-yellow-100 text-yellow-800"
-                        : selectedReport.status === "reviewed"
-                        ? "bg-green-100 text-green-800"
-                        : "bg-red-100 text-red-800"
-                    }`}
-                  >
-                    {selectedReport.status}
-                  </span>
-                </p>
-                <p>
-                  <strong>Type:</strong> {selectedReport?.type || "General"}
-                </p>
-              </div>
-
-              <div className="mb-4">
-                <h3 className="text-lg font-semibold">Report Content</h3>
-                <div className="p-3 bg-gray-50 rounded-lg">
-                  <p>{selectedReport?.content || "No content available"}</p>
+              {/* Patient Information Section */}
+              <div className="mb-6 bg-blue-50 p-4 rounded-lg border border-blue-100">
+                <h3 className="text-lg font-semibold text-blue-800 mb-3">Patient Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <p className="text-sm text-gray-600">Name</p>
+                    <p className="font-medium">{selectedReport?.patient?.name || 'Not available'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Email</p>
+                    <p className="font-medium">{selectedReport?.patient?.email || 'Not available'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Patient ID</p>
+                    <p className="font-medium">{selectedReport?.patient_id || selectedReport?.patientId || 'Not available'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Age</p>
+                    <p className="font-medium">{selectedReport?.patient?.age || 'Not specified'}</p>
+                  </div>
                 </div>
               </div>
+
+              {/* Report Information Section */}
+              <div className="mb-6 bg-green-50 p-4 rounded-lg border border-green-100">
+                <h3 className="text-lg font-semibold text-green-800 mb-3">Report Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <p className="text-sm text-gray-600">Date Created</p>
+                    <p className="font-medium">
+                      {selectedReport?.created_at
+                        ? new Date(selectedReport.created_at).toLocaleString('en-US', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })
+                        : "N/A"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Report Type</p>
+                    <p className="font-medium">{selectedReport?.type || "General Health Report"}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Status</p>
+                    <span
+                      className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                        selectedReport.status === "pending"
+                          ? "bg-yellow-100 text-yellow-800"
+                          : selectedReport.status === "reviewed"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-red-800"
+                      }`}
+                    >
+                      {selectedReport.status.charAt(0).toUpperCase() + selectedReport.status.slice(1)}
+                    </span>
+                  </div>
+                  {selectedReport.reviewed_at && (
+                    <div>
+                      <p className="text-sm text-gray-600">Reviewed On</p>
+                      <p className="font-medium">
+                        {new Date(selectedReport.reviewed_at).toLocaleString()}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Report Content Section */}
+              <div className="mb-4">
+                <h3 className="text-lg font-semibold text-gray-800 mb-3">Report Content</h3>
+                <div className="p-4 bg-gray-50 rounded-lg border border-gray-200 max-h-60 overflow-y-auto">
+                  {selectedReport?.content ? (
+                    <div className="prose max-w-none">
+                      <p>{selectedReport.content}</p>
+                      
+                      {/* Display prediction results if available */}
+                      {selectedReport.prediction_results && (
+                        <div className="mt-4 pt-4 border-t border-gray-200">
+                          <h4 className="font-medium text-gray-800 mb-2">Prediction Results</h4>
+                          <div className="bg-white p-3 rounded border border-gray-200">
+                            <p><strong>Prediction:</strong> {selectedReport.prediction_results.prediction}</p>
+                            <p><strong>Confidence:</strong> {selectedReport.prediction_results.confidence}%</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-gray-500 italic">No content available for this report.</p>
+                  )}
+                </div>
+              </div>
+              
+              {/* Doctor's Comments Section - Only show if report has been reviewed */}
+              {selectedReport.status !== 'pending' && selectedReport.doctor_comment && (
+                <div className="mb-4">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-3">Doctor's Comments</h3>
+                  <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                    <p className="italic">"{selectedReport.doctor_comment}"</p>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </Modal.Body>
-        <Modal.Footer>
+        <Modal.Footer className="flex justify-between">
+          <div>
+            {selectedReport && selectedReport.status === 'pending' && (
+              <>
+                <Button 
+                  variant="success" 
+                  className="mr-2"
+                  onClick={() => {
+                    onApprove && onApprove(selectedReport._id);
+                    handleCloseModal();
+                  }}
+                >
+                  <FaCheck className="mr-1" /> Approve Report
+                </Button>
+                <Button 
+                  variant="danger"
+                  onClick={() => {
+                    onReject && onReject(selectedReport._id);
+                    handleCloseModal();
+                  }}
+                >
+                  <FaTimes className="mr-1" /> Mark as Critical
+                </Button>
+              </>
+            )}
+          </div>
           <Button variant="secondary" onClick={handleCloseModal}>
             Close
           </Button>
@@ -123,7 +205,7 @@ function ReportsTable({ reports }) {
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
         >
-          <option value="">All Status</option>
+          <option value="all">All Status</option>
           <option value="pending">Pending</option>
           <option value="reviewed">Reviewed</option>
           <option value="critical">Critical</option>
@@ -177,7 +259,11 @@ function ReportsTable({ reports }) {
                     : "N/A"}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <button className="text-blue-600 hover:text-blue-800">
+                  <button 
+                    className="text-blue-600 hover:text-blue-800"
+                    onClick={() => handleViewDetail(report)}
+                    title="View Report Details"
+                  >
                     <FaEye className="w-5 h-5" />
                   </button>
                 </td>
@@ -202,10 +288,18 @@ function ReportsTable({ reports }) {
                   >
                     <FaInfoCircle className="w-5 h-5" />
                   </button>
-                  <button className="text-green-600 hover:text-green-800 mr-3">
+                  <button 
+                    className="text-green-600 hover:text-green-800 mr-3" 
+                    onClick={() => onApprove && onApprove(report._id)}
+                    title="Approve Report"
+                  >
                     <FaCheck className="w-5 h-5" />
                   </button>
-                  <button className="text-red-600 hover:text-red-800">
+                  <button 
+                    className="text-red-600 hover:text-red-800"
+                    onClick={() => onReject && onReject(report._id)}
+                    title="Reject Report"
+                  >
                     <FaTimes className="w-5 h-5" />
                   </button>
                 </td>
